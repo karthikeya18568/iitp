@@ -1,0 +1,181 @@
+# EDA Results
+
+## Load and profile
+
+Raw source used: **pd.read_csv fallback (URLError)**. Raw shape: **891 rows × 15 columns**. The connected path calls `sns.load_dataset('titanic')` once and immediately writes `titanic.csv`; the committed CSV is the offline fallback.
+
+### Raw `info()` output
+
+```text
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 891 entries, 0 to 890
+Data columns (total 15 columns):
+ #   Column       Non-Null Count  Dtype  
+---  ------       --------------  -----  
+ 0   survived     891 non-null    int64  
+ 1   pclass       891 non-null    int64  
+ 2   sex          891 non-null    object 
+ 3   age          714 non-null    float64
+ 4   sibsp        891 non-null    int64  
+ 5   parch        891 non-null    int64  
+ 6   fare         891 non-null    float64
+ 7   embarked     889 non-null    object 
+ 8   class        891 non-null    object 
+ 9   who          891 non-null    object 
+ 10  adult_male   891 non-null    bool   
+ 11  deck         204 non-null    object 
+ 12  embark_town  889 non-null    object 
+ 13  alive        891 non-null    object 
+ 14  alone        891 non-null    bool   
+dtypes: bool(2), float64(2), int64(4), object(7)
+memory usage: 92.4+ KB
+
+```
+
+### Raw `describe()` output
+
+```text
+             count unique          top freq       mean        std   min     25%      50%   75%       max
+survived     891.0    NaN          NaN  NaN   0.383838   0.486592   0.0     0.0      0.0   1.0       1.0
+pclass       891.0    NaN          NaN  NaN   2.308642   0.836071   1.0     2.0      3.0   3.0       3.0
+sex            891      2         male  577        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+age          714.0    NaN          NaN  NaN  29.699118  14.526497  0.42  20.125     28.0  38.0      80.0
+sibsp        891.0    NaN          NaN  NaN   0.523008   1.102743   0.0     0.0      0.0   1.0       8.0
+parch        891.0    NaN          NaN  NaN   0.381594   0.806057   0.0     0.0      0.0   0.0       6.0
+fare         891.0    NaN          NaN  NaN  32.204208  49.693429   0.0  7.9104  14.4542  31.0  512.3292
+embarked       889      3            S  644        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+class          891      3        Third  491        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+who            891      3          man  537        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+adult_male     891      2        False  496        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+deck           204      8            C   59        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+embark_town    889      3  Southampton  644        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+alive          891      2           no  549        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+alone          891      2         True  537        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+```
+
+### Missing values before cleaning
+
+|             |   missing_percent |
+|:------------|------------------:|
+| age         |             19.87 |
+| embarked    |              0.22 |
+| deck        |             77.1  |
+| embark_town |              0.22 |
+
+### Cleaning decisions
+
+- `age`: 19.87% missing, so it falls in the 5%-30% band. Median imputation was used; the median before imputation was **28.00**.
+- `embarked`: 0.22% missing, below 5%, so the affected rows were dropped.
+- `deck`: 77.10% missing, above 30%. It was dropped because the missingness is too high for reliable imputation and deck is not required for the main modeling task.
+
+Cleaned shape: **889 rows × 14 original columns** (plus EDA-only z-score columns).
+
+### Profiling output
+
+```text
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 889 entries, 0 to 888
+Data columns (total 14 columns):
+ #   Column       Non-Null Count  Dtype  
+---  ------       --------------  -----  
+ 0   survived     889 non-null    int64  
+ 1   pclass       889 non-null    int64  
+ 2   sex          889 non-null    object 
+ 3   age          889 non-null    float64
+ 4   sibsp        889 non-null    int64  
+ 5   parch        889 non-null    int64  
+ 6   fare         889 non-null    float64
+ 7   embarked     889 non-null    object 
+ 8   class        889 non-null    object 
+ 9   who          889 non-null    object 
+ 10  adult_male   889 non-null    bool   
+ 11  embark_town  889 non-null    object 
+ 12  alive        889 non-null    object 
+ 13  alone        889 non-null    bool   
+dtypes: bool(2), float64(2), int64(4), object(6)
+memory usage: 85.2+ KB
+
+```
+
+### Descriptive statistics
+
+```text
+             count unique          top freq       mean        std   min     25%      50%   75%       max
+survived     889.0    NaN          NaN  NaN   0.382452    0.48626   0.0     0.0      0.0   1.0       1.0
+pclass       889.0    NaN          NaN  NaN   2.311586     0.8347   1.0     2.0      3.0   3.0       3.0
+sex            889      2         male  577        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+age          889.0    NaN          NaN  NaN  29.315152  12.984932  0.42    22.0     28.0  35.0      80.0
+sibsp        889.0    NaN          NaN  NaN   0.524184   1.103705   0.0     0.0      0.0   1.0       8.0
+parch        889.0    NaN          NaN  NaN   0.382452   0.806761   0.0     0.0      0.0   0.0       6.0
+fare         889.0    NaN          NaN  NaN  32.096681  49.697504   0.0  7.8958  14.4542  31.0  512.3292
+embarked       889      3            S  644        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+class          889      3        Third  491        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+who            889      3          man  537        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+adult_male     889      2        False  494        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+embark_town    889      3  Southampton  644        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+alive          889      2           no  549        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+alone          889      2         True  535        NaN        NaN   NaN     NaN      NaN   NaN       NaN
+```
+
+## Univariate analysis
+
+- Age IQR bounds: **[2.50, 54.50]**; outliers: **65**.
+- Fare IQR bounds: **[-26.76, 65.66]**; outliers: **114**.
+- Fare mean: **32.10**; median: **14.45**; mode: **8.05**. The ordering mean > median > mode indicates a **right-skewed** distribution.
+
+## Bivariate survival rates
+
+### By sex
+
+- Female: **0.740 (74.0%)**
+- Male: **0.189 (18.9%)**
+
+### By passenger class
+
+- First: **0.626 (62.6%)**
+- Second: **0.473 (47.3%)**
+- Third: **0.242 (24.2%)**
+
+### Boolean-mask examples for sex + class
+
+- Female & First: **0.967 (96.7%)**
+- Male & Third: **0.135 (13.5%)**
+
+### Full sex × class table
+
+| sex    |   pclass |   survival_rate |
+|:-------|---------:|----------------:|
+| female |        1 |        0.967391 |
+| female |        2 |        0.921053 |
+| female |        3 |        0.5      |
+| male   |        1 |        0.368852 |
+| male   |        2 |        0.157407 |
+| male   |        3 |        0.135447 |
+
+## Correlation matrix
+
+The matrix uses exactly: `survived, pclass, age, sibsp, parch, fare`. The boolean-derived `adult_male` and `alone` columns are excluded as required.
+
+Top two absolute off-diagonal correlations:
+
+1. **pclass ↔ fare**: r = **-0.548**. This is the strongest linear association in the selected numeric feature set.
+2. **sibsp ↔ parch**: r = **0.415**. This is the second strongest association by absolute correlation.
+
+## Multivariate data story
+
+**Chart 1 — Survival by sex and class:** Survival differs strongly by sex, and passenger class further separates outcomes. Female passengers generally have much higher survival rates, while third-class passengers have lower survival than first-class passengers.
+
+**Chart 2 — Fare by survival:** Survivors tend to have higher fares than non-survivors, consistent with the relationship between fare and passenger class. The wide spread and high-value fares also explain why fare has substantial IQR outliers.
+
+**Chart 3 — Age vs fare by survival:** The scatter shows survival is not explained by age alone; survival also varies across fare levels. Younger passengers include many survivors, but fare/class-related differences remain visible across age groups.
+
+**Chart 4 — Survival by class and embarkation:** Passenger class is a strong separator of survival, while embarkation adds another grouping dimension. This supports including class and embarkation as predictive features rather than relying on a single demographic variable.
+
+## EDA-stage standardization sanity check
+
+|      |   age_z |   fare_z |
+|:-----|--------:|---------:|
+| mean |       0 |        0 |
+| std  |       1 |        1 |
+
+The standardized `age_z` and `fare_z` columns have means approximately 0 and standard deviations approximately 1. These columns are used only for the EDA sanity check and are **not** fed into the modeling pipeline.

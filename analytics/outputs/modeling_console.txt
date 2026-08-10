@@ -1,0 +1,64 @@
+# Modeling Results
+
+## Split and leakage control
+
+The cleaned dataset was split **before preprocessing** using `train_test_split(..., stratify=y, random_state=42)`. The observed class balance was {0: 0.618, 1: 0.382}, so stratification preserves approximately the same survived/not-survived proportions in train and test. All imputers, encoders, and scalers are inside scikit-learn pipelines and are fit on the training split only.
+
+## Classification comparison
+
+| model               |   accuracy |   precision |   recall |     f1 |    auc |
+|:--------------------|-----------:|------------:|---------:|-------:|-------:|
+| Logistic Regression |      0.809 |      0.7833 |   0.6912 | 0.7344 | 0.861  |
+| Decision Tree       |      0.764 |      0.76   |   0.5588 | 0.6441 | 0.8374 |
+| Random Forest       |      0.809 |      0.7656 |   0.7206 | 0.7424 | 0.8196 |
+
+Confusion matrices and ROC curves are saved as supporting chart artifacts.
+
+## Imbalance comparison
+
+| model                 |   precision |   recall |     f1 |
+|:----------------------|------------:|---------:|-------:|
+| Baseline              |      0.7833 |   0.6912 | 0.7344 |
+| class_weight=balanced |      0.7183 |   0.75   | 0.7338 |
+| SMOTE (train only)    |      0.7353 |   0.7353 | 0.7353 |
+
+The best imbalance strategy is selected by the balance of precision, recall and F1 rather than accuracy alone. SMOTE is applied only after fitting the preprocessing transformer on the training fold and never to the test set, preventing leakage.
+
+## Random Forest tuning
+
+Best parameters: **{'model__max_depth': 5, 'model__max_features': 'sqrt', 'model__n_estimators': 200}**
+
+Best cross-validation F1: **0.7408**
+
+OOB score from the fitted `RandomForestClassifier(oob_score=True, ...)`: **0.8214**
+
+## Regression side-task
+
+| Metric | Value |
+|---|---:|
+| MAE | 21.1386 |
+| RMSE | 41.7465 |
+| R² | 0.3468 |
+| Adjusted R² | 0.3118 |
+
+The residual plot shows **evidence of heteroscedasticity** based on the visual spread and a simple residual-vs-predicted diagnostic.
+
+## Final recommendation
+
+Random Forest achieved the highest test F1 among the three classifiers (0.742) while maintaining an AUC of 0.820. It is the recommended classifier because it captures nonlinear interactions without requiring manual feature transformations. The Decision Tree is easier to inspect, but the ensemble is generally more robust. The final deployment artifact is the complete preprocessing-plus-estimator pipeline.
+
+## Final model comparison table
+
+| model_type     | model                    |   accuracy |   precision |   recall |       f1 |      auc |      MAE |     RMSE |       R2 |   Adjusted_R2 |
+|:---------------|:-------------------------|-----------:|------------:|---------:|---------:|---------:|---------:|---------:|---------:|--------------:|
+| classification | Logistic Regression      |      0.809 |      0.7833 |   0.6912 |   0.7344 |   0.861  | nan      | nan      | nan      |      nan      |
+| classification | Decision Tree            |      0.764 |      0.76   |   0.5588 |   0.6441 |   0.8374 | nan      | nan      | nan      |      nan      |
+| classification | Random Forest            |      0.809 |      0.7656 |   0.7206 |   0.7424 |   0.8196 | nan      | nan      | nan      |      nan      |
+| regression     | Linear Regression (fare) |    nan     |    nan      | nan      | nan      | nan      |  21.1386 |  41.7465 |   0.3468 |        0.3118 |
+
+Classification and regression metrics are intentionally presented as separate metric groups because they measure different objectives and are not directly comparable.
+
+## Saved artifact
+
+`models/best_classifier_pipeline.joblib` contains the complete fitted preprocessing + classifier pipeline. It was reloaded with `joblib.load` and successfully generated a prediction on raw test-row features; reload check prediction: **0**.
+
